@@ -1,9 +1,12 @@
-def decor(func):
+def input_error(func):
     def wrapper(*args):
         try:
             return func(*args)
         except IndexError:
-            return "Sorry, try again"
+            return "Sorry, reading from invalid index"
+        except Exception as e:
+            return str(e)
+
 
     return wrapper
 
@@ -11,10 +14,13 @@ def decor(func):
 contacts = {}
 
 
-@decor
+@input_error
 def add(*args):
-    name = args[0]
-    phone_number = args[1]
+    try:
+        name = args[0]
+        phone_number = args[1]
+    except IndexError:
+        raise Exception("Please, input name and phone")
     contacts[name] = phone_number
     return f"This is ADD, name {name}, phone {phone_number}"
 
@@ -23,22 +29,30 @@ def hello(*args):
     return "How can I help you?"
 
 
+@input_error
 def change(*args):
-    name = args[0]
-    phone_number = args[1]
+    try:
+        name = args[0]
+        phone_number = args[1]
+    except IndexError:
+        raise Exception("Please, input name and phone")
+
     if name in contacts.keys():
         contacts[name] = phone_number
         return f"This is CHANGE, phone {phone_number} for name {name}"
     else:
-        return f"This name {name} is not found. Please input correct name"
+        raise Exception(f"This name {name} is not found. Please input correct name")
 
-
+@input_error
 def phone(*args):
-    name = args[0]
+    try:
+        name = args[0]
+    except IndexError:
+        raise Exception("Please specify name")
     if name in contacts.keys():
         return f"This is phone {contacts[name]} for name {name}"
     else:
-        return f"This name {name} is not found. Please input correct name"
+        raise Exception(f"This name {name} is not found. Please input correct name")
 
 
 def show_all(*args):
