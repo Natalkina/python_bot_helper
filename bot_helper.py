@@ -48,7 +48,7 @@ def phone(*args):
     try:
         name = args[0]
     except IndexError:
-        raise Exception("Please specify name")
+        raise Exception("Please specify namebot_helper.py")
     if name in contacts.keys():
         return f"This is phone {contacts[name]} for name {name}"
     else:
