@@ -69,7 +69,7 @@ COMMANDS = {
 
 def command_parser(user_input: str):
     for  key_word, command in COMMANDS.items():
-        if user_input.startswith(key_word):
+        if user_input.lower().startswith(key_word):
             return command, user_input.replace(key_word, "").strip().split(" ")
     return None, None
 
