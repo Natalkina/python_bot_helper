@@ -109,8 +109,8 @@ def change(*args):
 def phone(*args):
     try:
         name = args[0]
-    except IndexError:
-        raise Exception("Please specify namebot_helper.py")
+
+        raise Exception("Please specify name")
     return f"This is phone {contacts.get_record(name).phones} for name {name}"
 
 

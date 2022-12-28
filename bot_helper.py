@@ -4,6 +4,8 @@ def input_error(func):
             return func(*args)
         except IndexError:
             return "Sorry try again"
+        except Exception as e:
+            return str(e)
 
     return wrapper
 
@@ -29,13 +31,18 @@ def change(*args):
     phone_number = args[1]
     if name in contacts.keys():
         contacts[name] = phone_number
-    return f"This is CHANGE, phone {phone_number} for name {name}"
+        return f"This is CHANGE, phone {phone_number} for name {name}"
+    else:
+        raise Exception("Name is not found in contacts")
 
 @input_error
 def phone(*args):
     name = args[0]
     if name in contacts.keys():
         return f"This is phone {contacts[name]} for name {name}"
+    else:
+        raise Exception("Name is not found in contacts")
+
 
 
 def show_all(*args):
