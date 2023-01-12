@@ -1,43 +1,15 @@
 from collections import UserDict
 
 
-class AddressBook(UserDict):
-    def add_record(self, record):
-        self.data[record.name.value] = record
-
-
-    def change_record(self, record):
-        if record.name.value in self.data:
-            self.data[record.name.value] = record
-        else:
-            raise Exception(f"This name {record.name.value} is not found. Please input correct name")
-
-    def get_record(self, name):
-        if name in self.data.keys():
-            return self.data[name]
-        else:
-            raise Exception(f"This name {name} is not found. Please input correct name")
-
-
-class Record:
-    def __init__(self, name, phone):
-        self.name = name
-        self.phones = [phone]
-
-    def __str__(self):
-        return self.name.value + repr(self.phones)
-
-    def __repr__(self):
-        return str(self)
-
-
 class Field:
     def __init__(self, value):
         self.value = value
 
+    def __eq__(self, other):
+        return self.value == other.value
+
     def __str__(self):
         return self.value
-
 
     def __repr__(self):
         return self.value
@@ -49,6 +21,43 @@ class Name(Field):
 
 class Phone(Field):
     pass
+
+
+class Record:
+    def __init__(self, name: Name, phone: Phone = None):
+        self.name = name
+        self.phones = [phone]
+
+    def add_phone(self, add_phone: Phone):
+        self.phones.append(add_phone)
+
+    def remove_phone(self, removable_phone: Phone):
+        self.phones = self.phones.remove(removable_phone)
+
+    def change_phone(self, changeable_phone: Phone, new_phone: Phone):
+
+        for i, n in enumerate(self.phones):
+            if n == changeable_phone:
+                self.phones[i] = new_phone
+
+        return self.phones
+
+    def __str__(self):
+        return self.name.value + repr(self.phones)
+
+    def __repr__(self):
+        return str(self)
+
+
+class AddressBook(UserDict[str, Record]):
+    def add_record(self, record: Record) -> None:
+        self.data[record.name.value] = record
+
+    def change_record(self, record: Record):
+        if record.name.value in self.data:
+            self.data[record.name.value] = record
+        else:
+            raise Exception(f"This name {record.name.value} is not found. Please input correct name")
 
 
 def input_error(func):
@@ -68,18 +77,55 @@ contacts = AddressBook()
 
 @input_error
 def add(*args):
-    try:
-        name = args[0]
-        phone_number = args[1]
-    except IndexError:
-        raise Exception("Please, input name and phone")
+    name = args[0]
+    phone_number = args[1]
     contacts.add_record(
         Record(
             Name(name),
-            [Phone(phone_number)]
+            Phone(phone_number)
         )
     )
     return f"This is ADD, name {name}, phone {phone_number}"
+
+
+@input_error
+def add_phone(*args):
+    name = args[0]
+    phone_number = args[1]
+    if name in contacts.keys():
+        contacts[name].add_phone(Phone(phone_number))
+        return f"This is ADD, name {name}, phone {phone_number}"
+    else:
+        return f"This Name {name} is not found in contacts"
+
+
+@input_error
+def remove_phone(*args):
+    name = args[0]
+    phone_number = args[1]
+    if name in contacts.keys():
+        if Phone(phone_number) in contacts[name].phones:
+            contacts[name].remove_phone(Phone(phone_number))
+            return f"This is REMOVE phone {phone_number} from name {name}"
+        else:
+            return f"This {phone_number} is not defined"
+    else:
+        return f"This Name {name} is not found in contacts"
+
+
+@input_error
+def change_phone(*args):
+    name = args[0]
+    phone_number = args[1]
+    new_phone_number = args[2]
+    if name in contacts.keys():
+        if Phone(phone_number) in contacts[name].phones:
+            contacts[name].change_phone(Phone(phone_number), Phone(new_phone_number))
+            return f"This is CHANGE phone {phone_number} to new number {new_phone_number} for name {name}"
+        else:
+            return f"This phone number {phone_number} is not defined"
+    else:
+        return f"This Name {name} is not found in contacts"
 
 
 def hello(*args):
@@ -88,38 +134,34 @@ def hello(*args):
 
 @input_error
 def change(*args):
-    try:
-        name = args[0]
-        phone_number = args[1]
-    except IndexError:
-        raise Exception("Please, input name and phone")
-
-    contacts.change_record(
-        Record(
-            Name(name),
-            [Phone(phone_number)]
+    name = args[0]
+    phone_number = args[1]
+    if name in contacts.keys():
+        contacts.change_record(
+            Record(
+                Name(name),
+                [Phone(phone_number)]
+            )
         )
-    )
-
-    return f"This is CHANGE, phone {phone_number} for name {name}"
-
+        return f"This is CHANGE, phone {phone_number} for name {name}"
+    else:
+        raise Exception("Name is not found in contacts")
 
 
 @input_error
 def phone(*args):
-    try:
-        name = args[0]
+    name = args[0]
+    if name in contacts.keys():
+        return f"This is phone {contacts.get(name).phones} for name {name}"
 
-        raise Exception("Please specify name")
-    return f"This is phone {contacts.get_record(name).phones} for name {name}"
-
+    else:
+        raise Exception("Name is not found in contacts")
 
 
 def show_all(*args):
     pattern = '{0:10}  {1}\n'
     table = pattern.format("Name", "Phones")
     for record in contacts.values():
-
         table += pattern.format(record.name.value, ", ".join(map(repr, record.phones)))
     return table
 
@@ -131,25 +173,24 @@ def close(*args):
 
 COMMANDS = {
     "add": add,
+    "phone add": add_phone,
+    "phone change": change_phone,
+    "phone remove": remove_phone,
     "hello": hello,
     "change": change,
     "phone": phone,
-    "show_all": show_all,
+    "show all": show_all,
     "close": close,
-    "good_bye": close,
+    "good bye": close,
     "exit": close,
 }
 
 
 def command_parser(user_input: str):
-    chunks = user_input.strip().split(" ")
-    command_name = chunks[0].lower()
-    args = chunks[1:]
-
-    if command_name in COMMANDS.keys():
-        return COMMANDS[command_name], args
-    else:
-        return None, None
+    for key_word, command in COMMANDS.items():
+        if user_input.lower().startswith(key_word):
+            return command, user_input.replace(key_word, "").strip().split(" ")
+    return None, None
 
 
 def main():
