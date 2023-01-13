@@ -1,8 +1,10 @@
 from collections import UserDict
+from datetime import datetime
 
 
 class Field:
     def __init__(self, value):
+        self.__private_value = None
         self.value = value
 
     def __eq__(self, other):
@@ -14,6 +16,16 @@ class Field:
     def __repr__(self):
         return self.value
 
+    @property
+    def value(self):
+        return self.__private_value
+
+    @value.setter
+    def value(self, value):
+        self.__private_value = value
+
+
+
 
 class Name(Field):
     pass
@@ -23,17 +35,21 @@ class Phone(Field):
     pass
 
 
+class Birthday(Field):
+    pass
+
+
 class Record:
-    def __init__(self, name: Name, phone: Phone = None):
+    def __init__(self, name: Name, phone: Phone = None, birthday: Birthday = None):
         self.name = name
         self.phones = [phone]
+        self.birthday = birthday
 
     def add_phone(self, add_phone: Phone):
         self.phones.append(add_phone)
 
     def remove_phone(self, removable_phone: Phone):
-        self.phones = [n for n in self.phones if n != removable_phone]
-
+        self.phones = self.phones.remove(removable_phone)
 
     def change_phone(self, changeable_phone: Phone, new_phone: Phone):
 
@@ -43,8 +59,18 @@ class Record:
 
         return self.phones
 
+    def days_to_birthday(self, birthday, now):
+
+        date_birthday = datetime.strptime(birthday, '%m-%d-%Y').date()
+        delta1 = datetime(now.year, date_birthday.month, date_birthday.day)
+        delta2 = datetime(now.year + 1, date_birthday.month, date_birthday.day)
+        if delta1 > now:
+            return (delta1 - now).days
+        else:
+            return (delta2 - now).days
+
     def __str__(self):
-        return self.name.value + repr(self.phones)
+        return self.name.value + repr(self.phones) + repr(self.birthday)
 
     def __repr__(self):
         return str(self)
@@ -80,12 +106,22 @@ contacts = AddressBook()
 def add(*args):
     name = args[0]
     phone_number = args[1]
-    contacts.add_record(
-        Record(
-            Name(name),
-            Phone(phone_number)
+    if len(args) == 3:
+        birthday = args[2]
+        contacts.add_record(
+            Record(
+                Name(name),
+                Phone(phone_number),
+                Birthday(birthday)
+            )
         )
-    )
+    elif len(args) == 2:
+        contacts.add_record(
+            Record(
+                Name(name),
+                Phone(phone_number),
+            )
+        )
     return f"This is ADD, name {name}, phone {phone_number}"
 
 
@@ -159,11 +195,28 @@ def phone(*args):
         raise Exception("Name is not found in contacts")
 
 
+@input_error
+def days_to_birthday(*args):
+    name = args[0]
+    phone = args[1]
+    birthday = args[2]
+    if name in contacts.keys():
+        return f"This is phone {contacts.get(name).phones} for name {name}"
+
+    else:
+        raise Exception("Name is not found in contacts")
+
+
+
 def show_all(*args):
-    pattern = '{0:10}  {1}\n'
-    table = pattern.format("Name", "Phones")
+    pattern = '{0:10} {1:10} {2:10}\n'
+    table = pattern.format("Name", "Phones", "Birthday")
     for record in contacts.values():
-        table += pattern.format(record.name.value, ", ".join(map(repr, record.phones)))
+        table += pattern.format(
+            record.name.value,
+            ", ".join(map(repr, record.phones)),
+            record.birthday.value
+        )
     return table
 
 
@@ -221,7 +274,5 @@ if __name__ == '__main__':
     assert ab['Bill'].phones[0].value == '1234567890'
 
     print('All Ok)')
-
-
 
     main()
