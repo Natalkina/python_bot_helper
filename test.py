@@ -1,5 +1,6 @@
-a = [1, 2, 3]
-print(a)
-b = [n for n in a if n != 1]
-print(b)
+from datetime import date
+
+date_b = "20010207"
+print(date.fromisoformat(date_b))
+
 
